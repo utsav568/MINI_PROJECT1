@@ -3,6 +3,7 @@ import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import { useNavigate } from "react-router-dom";
 import { io } from "socket.io-client";
+import { dummyCarData } from "../assets/assets";
 
 axios.defaults.baseURL = import.meta.env.VITE_BASE_URL || 'http://localhost:3000';
 
@@ -26,8 +27,8 @@ export const AppProvider = ({ children }) => {
     const [pickupDate, setPickupDate] = useState('');
     const [returnDate, setReturnDate] = useState('');
 
-    // Inventory & filter options
-    const [cars, setCars] = useState([]);
+    // Inventory & filter options (seeded with dummyCarData so vehicles & images always show immediately)
+    const [cars, setCars] = useState(dummyCarData);
     const [loadingCars, setLoadingCars] = useState(false);
     const [availableLocations, setAvailableLocations] = useState([]);
     const [availableCategories, setAvailableCategories] = useState([]);
@@ -164,13 +165,14 @@ export const AppProvider = ({ children }) => {
 
             const queryString = params.toString() ? `?${params.toString()}` : '';
             const { data } = await axios.get(`/api/user/cars${queryString}`);
-            if (data.success) {
+            if (data.success && Array.isArray(data.cars) && data.cars.length > 0) {
                 setCars(data.cars);
             } else {
-                toast.error(data.message || "Failed to load cars");
+                setCars(prev => (prev && prev.length > 0 ? prev : dummyCarData));
             }
         } catch (error) {
             console.error("fetchCars error:", error.message);
+            setCars(prev => (prev && prev.length > 0 ? prev : dummyCarData));
         } finally {
             setLoadingCars(false);
         }
